@@ -1,0 +1,7 @@
+package com.denizshopping.ecommerce.dto;
+
+public record CategoryDto(
+        Long id,
+        String name,
+        String slug
+) {}

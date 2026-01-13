@@ -1,0 +1,10 @@
+.idea/
+*.iml
+target/
+build/
+.mvn/
+mvnw
+mvnw.cmd
+.gradle/
+.DS_Store
+.env

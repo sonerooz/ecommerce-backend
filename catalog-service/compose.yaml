@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: catalog-db  # <-- İSMİ DEĞİŞTİRDİK
+    environment:
+      - 'POSTGRES_DB=ecommerce_catalog' # <-- DB ADI DEĞİŞTİ
+      - 'POSTGRES_PASSWORD=12345'
+      - 'POSTGRES_USER=deniz'
+    ports:
+      - '5433:5432'  # <-- PORTU 5433 YAPTIK (Sol taraf host portudur)

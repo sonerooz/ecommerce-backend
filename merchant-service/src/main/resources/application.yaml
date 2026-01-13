@@ -1,0 +1,22 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: merchant-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/ecommerce_merchant
+    username: deniz
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false # Performans uyarısını kapatır
+    hibernate:
+      # İLK ÇALIŞTIRMADA 'create' KALSIN, tablolar oluşunca 'update' YAPARSIN.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

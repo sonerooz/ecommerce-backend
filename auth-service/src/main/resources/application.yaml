@@ -1,0 +1,28 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5435/ecommerce_auth
+    username: deniz
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false # Performans uyarısını kapatır
+    hibernate:
+      # İLK ÇALIŞTIRMADA 'create' KALSIN, tablolar oluşunca 'update' YAPARSIN.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  # Bu anahtar tokenları imzalamak için kullanılır. ASLA dışarı sızmamalı!
+  # 256-bit (32 byte) uzunluğunda Base64 formatında rastgele bir anahtar.
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400000 # 1 Gün (milisaniye cinsinden: 24 * 60 * 60 * 1000)

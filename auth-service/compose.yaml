@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: 'auth-db'
+    environment:
+      - 'POSTGRES_DB=ecommerce_auth'
+      - 'POSTGRES_PASSWORD=12345'
+      - 'POSTGRES_USER=deniz'
+    ports:
+      - '5435:5432'
