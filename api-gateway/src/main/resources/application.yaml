@@ -9,50 +9,41 @@ spring:
     gateway:
       routes:
         # ---------------------------------------------------
-        # 1. AUTH SERVICE (Giriş/Kayıt)
+        # 1. AUTH SERVICE
         # ---------------------------------------------------
-        # Herkese açık olmalı, token sorulmaz.
         - id: auth-service
-          uri: http://localhost:8083
+          uri: http://auth-service-container:8083
           predicates:
             - Path=/api/auth/**
 
         # ---------------------------------------------------
-        # 2. CATALOG SERVICE (Ürünler & Kategoriler)
+        # 2. CATALOG SERVICE
         # ---------------------------------------------------
-
-        # A) PUBLIC - Sadece Okuma (GET)
-        # Müşteriler ürünleri token olmadan görebilsin.
         - id: catalog-service-public
-          uri: http://localhost:8081
+          uri: http://catalog-service-container:8081
           predicates:
             - Path=/api/products/**, /api/categories/**
-            - Method=GET  # <-- Sadece GET istekleri buraya girer, Filtre YOK.
+            - Method=GET
 
-        # B) SECURED - Yazma/Silme (POST, PUT, DELETE)
-        # Ürün eklemek/silmek için Token şart.
         - id: catalog-service-secured
-          uri: http://localhost:8081
+          uri: http://catalog-service-container:8081
           predicates:
             - Path=/api/products/**, /api/categories/**
-            - Method=POST, PUT, DELETE # <-- Kritik değişiklikler
+            - Method=POST, PUT, DELETE
           filters:
-            - AuthenticationFilter # <-- Kimlik Kontrolü Burada!
+            - AuthenticationFilter
 
         # ---------------------------------------------------
-        # 3. MERCHANT SERVICE (Mağazalar)
+        # 3. MERCHANT SERVICE
         # ---------------------------------------------------
-
-        # A) PUBLIC - Mağaza Profili Görme (GET)
         - id: merchant-service-public
-          uri: http://localhost:8082
+          uri: http://merchant-service-container:8082
           predicates:
             - Path=/api/stores/**
             - Method=GET
 
-        # B) SECURED - Mağaza Yönetimi (POST, PUT, DELETE)
         - id: merchant-service-secured
-          uri: http://localhost:8082
+          uri: http://merchant-service-container:8082
           predicates:
             - Path=/api/stores/**
             - Method=POST, PUT, DELETE

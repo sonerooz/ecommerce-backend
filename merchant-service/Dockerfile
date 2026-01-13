@@ -1,5 +1,5 @@
-# 1. Adım: Java 21 sürümünü kullanıyoruz (Senin projene uygun olan)
-FROM openjdk:21-jdk-slim
+# 1. Adım: Java 21 sürümünü kullanıyoruz
+FROM eclipse-temurin:21-jdk
 
 # 2. Adım: Çalışma klasörünü ayarla
 WORKDIR /app
