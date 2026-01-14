@@ -19,8 +19,8 @@ pipeline {
                     // Eski konteynır varsa durdur ve sil
                     sh 'docker stop api-gateway-container || true'
                     sh 'docker rm api-gateway-container || true'
-                    // Yenisini başlat (DIKKAT: 80 portunu 8080'e bağlıyoruz)
-                    sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 80:8080 api-gateway'
+                    // 80 yerine 8090 yapıyoruz
+                    sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 8090:8080 api-gateway'
                 }
             }
         }
