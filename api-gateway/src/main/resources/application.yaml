@@ -49,3 +49,9 @@ spring:
             - Method=POST, PUT, DELETE
           filters:
             - AuthenticationFilter
+
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: health,info
