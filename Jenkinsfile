@@ -4,7 +4,6 @@ pipeline {
     stages {
         stage('Sistemi Hazırla') {
             steps {
-                // Konteynırların birbiriyle konuşması için özel bir ağ kuruyoruz
                 sh 'docker network create ecommerce-net || true'
             }
         }
@@ -14,12 +13,10 @@ pipeline {
                 dir('api-gateway') {
                     sh 'chmod +x mvnw'
                     sh './mvnw clean package -DskipTests'
-                    // Docker imajını oluştur
                     sh 'docker build -t api-gateway .'
-                    // Eski konteynır varsa durdur ve sil
                     sh 'docker stop api-gateway-container || true'
                     sh 'docker rm api-gateway-container || true'
-                    // 80 yerine 8090 yapıyoruz
+                    // Gateway: 8090
                     sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 8090:8080 api-gateway'
                 }
             }
@@ -33,8 +30,8 @@ pipeline {
                     sh 'docker build -t auth-service .'
                     sh 'docker stop auth-service-container || true'
                     sh 'docker rm auth-service-container || true'
-                    // Auth servisini ağa dahil et
-                    sh 'docker run -d --name auth-service-container --network ecommerce-net auth-service'
+                    // Auth: 8081 (Dışarı açtık)
+                    sh 'docker run -d --name auth-service-container --network ecommerce-net -p 8081:8080 auth-service'
                 }
             }
         }
@@ -47,7 +44,8 @@ pipeline {
                     sh 'docker build -t catalog-service .'
                     sh 'docker stop catalog-service-container || true'
                     sh 'docker rm catalog-service-container || true'
-                    sh 'docker run -d --name catalog-service-container --network ecommerce-net catalog-service'
+                    // Catalog: 8082 (Dışarı açtık - Swagger burada!)
+                    sh 'docker run -d --name catalog-service-container --network ecommerce-net -p 8082:8080 catalog-service'
                 }
             }
         }
@@ -60,7 +58,8 @@ pipeline {
                     sh 'docker build -t merchant-service .'
                     sh 'docker stop merchant-service-container || true'
                     sh 'docker rm merchant-service-container || true'
-                    sh 'docker run -d --name merchant-service-container --network ecommerce-net merchant-service'
+                    // Merchant: 8083 (Dışarı açtık)
+                    sh 'docker run -d --name merchant-service-container --network ecommerce-net -p 8083:8080 merchant-service'
                 }
             }
         }
