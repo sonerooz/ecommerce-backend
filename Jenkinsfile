@@ -24,8 +24,8 @@ pipeline {
                     sh 'docker build -t api-gateway .'
                     sh 'docker stop api-gateway-container || true'
                     sh 'docker rm api-gateway-container || true'
-                    // Gateway DB istemez ama yine de ekleyelim, zararı yok.
-                    sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 8090:8080 api-gateway'
+                    // Gateway'i de standart 8080'e zorluyoruz, dışarı 8090 veriyoruz
+                    sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 8090:8080 -e SERVER_PORT=8080 api-gateway'
                 }
             }
         }
@@ -38,11 +38,12 @@ pipeline {
                     sh 'docker build -t auth-service .'
                     sh 'docker stop auth-service-container || true'
                     sh 'docker rm auth-service-container || true'
-                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    // Auth Servisi: Dışarı 8081, İçeri 8080 (Zorunlu)
                     sh '''
                         docker run -d --name auth-service-container \
                         --network ecommerce-net \
                         -p 8081:8080 \
+                        -e SERVER_PORT=8080 \
                         -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
                         -e SPRING_DATASOURCE_USERNAME=postgres \
                         -e SPRING_DATASOURCE_PASSWORD=password \
@@ -61,11 +62,12 @@ pipeline {
                     sh 'docker build -t catalog-service .'
                     sh 'docker stop catalog-service-container || true'
                     sh 'docker rm catalog-service-container || true'
-                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    // Catalog Servisi: Dışarı 8082, İçeri 8080 (Zorunlu)
                     sh '''
                         docker run -d --name catalog-service-container \
                         --network ecommerce-net \
                         -p 8082:8080 \
+                        -e SERVER_PORT=8080 \
                         -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
                         -e SPRING_DATASOURCE_USERNAME=postgres \
                         -e SPRING_DATASOURCE_PASSWORD=password \
@@ -84,11 +86,12 @@ pipeline {
                     sh 'docker build -t merchant-service .'
                     sh 'docker stop merchant-service-container || true'
                     sh 'docker rm merchant-service-container || true'
-                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    // Merchant Servisi: Dışarı 8083, İçeri 8080 (Zorunlu)
                     sh '''
                         docker run -d --name merchant-service-container \
                         --network ecommerce-net \
                         -p 8083:8080 \
+                        -e SERVER_PORT=8080 \
                         -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
                         -e SPRING_DATASOURCE_USERNAME=postgres \
                         -e SPRING_DATASOURCE_PASSWORD=password \
