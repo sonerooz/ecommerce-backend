@@ -2,9 +2,17 @@ pipeline {
     agent any
 
     stages {
-        stage('Sistemi Hazırla') {
+        stage('Sistemi ve DB Hazırla') {
             steps {
                 sh 'docker network create ecommerce-net || true'
+
+                // Veritabanını önce başlatıyoruz
+                sh 'docker stop postgres-db || true'
+                sh 'docker rm postgres-db || true'
+                sh 'docker run -d --name postgres-db --network ecommerce-net -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=ecommerce_db postgres:15-alpine'
+
+                // Veritabanının kendine gelmesi için 10 saniye bekleyelim
+                sh 'sleep 10'
             }
         }
 
@@ -16,7 +24,7 @@ pipeline {
                     sh 'docker build -t api-gateway .'
                     sh 'docker stop api-gateway-container || true'
                     sh 'docker rm api-gateway-container || true'
-                    // Gateway: 8090
+                    // Gateway DB istemez ama yine de ekleyelim, zararı yok.
                     sh 'docker run -d --name api-gateway-container --network ecommerce-net -p 8090:8080 api-gateway'
                 }
             }
@@ -30,8 +38,17 @@ pipeline {
                     sh 'docker build -t auth-service .'
                     sh 'docker stop auth-service-container || true'
                     sh 'docker rm auth-service-container || true'
-                    // Auth: 8081 (Dışarı açtık)
-                    sh 'docker run -d --name auth-service-container --network ecommerce-net -p 8081:8080 auth-service'
+                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    sh '''
+                        docker run -d --name auth-service-container \
+                        --network ecommerce-net \
+                        -p 8081:8080 \
+                        -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
+                        -e SPRING_DATASOURCE_USERNAME=postgres \
+                        -e SPRING_DATASOURCE_PASSWORD=password \
+                        -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                        auth-service
+                    '''
                 }
             }
         }
@@ -44,8 +61,17 @@ pipeline {
                     sh 'docker build -t catalog-service .'
                     sh 'docker stop catalog-service-container || true'
                     sh 'docker rm catalog-service-container || true'
-                    // Catalog: 8082 (Dışarı açtık - Swagger burada!)
-                    sh 'docker run -d --name catalog-service-container --network ecommerce-net -p 8082:8080 catalog-service'
+                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    sh '''
+                        docker run -d --name catalog-service-container \
+                        --network ecommerce-net \
+                        -p 8082:8080 \
+                        -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
+                        -e SPRING_DATASOURCE_USERNAME=postgres \
+                        -e SPRING_DATASOURCE_PASSWORD=password \
+                        -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                        catalog-service
+                    '''
                 }
             }
         }
@@ -58,8 +84,17 @@ pipeline {
                     sh 'docker build -t merchant-service .'
                     sh 'docker stop merchant-service-container || true'
                     sh 'docker rm merchant-service-container || true'
-                    // Merchant: 8083 (Dışarı açtık)
-                    sh 'docker run -d --name merchant-service-container --network ecommerce-net -p 8083:8080 merchant-service'
+                    // DB Bilgilerini İçeri Enjekte Ediyoruz
+                    sh '''
+                        docker run -d --name merchant-service-container \
+                        --network ecommerce-net \
+                        -p 8083:8080 \
+                        -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
+                        -e SPRING_DATASOURCE_USERNAME=postgres \
+                        -e SPRING_DATASOURCE_PASSWORD=password \
+                        -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                        merchant-service
+                    '''
                 }
             }
         }
