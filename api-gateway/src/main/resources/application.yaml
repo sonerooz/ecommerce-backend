@@ -54,4 +54,5 @@ management:
   endpoints:
     web:
       exposure:
-        exclude: health,info
+        # HATA BURADAYDI: exclude değil include olmalı!
+        include: health,info,prometheus,metrics
