@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,83 +27,121 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (productRepository.count() == 0) {
-            System.out.println("🌱 Catalog verileri ekleniyor...");
-
-            // 1. Kategorileri Oluştur
-            Category cat1 = new Category();
-            cat1.setName("Kolye");
-            cat1.setSlug("kolye");
-            cat1.setCreatedBy("Admin");
-
-            Category cat2 = new Category();
-            cat2.setName("Deniz Temalı");
-            cat2.setSlug("deniz-temali");
-            cat2.setCreatedBy("Admin");
-
-            categoryRepository.saveAll(List.of(cat1, cat2));
-
-            // 2. Ürünü Oluştur
-            Product product = new Product();
-            product.setName("Okyanus İncisi Deniz Kabuğu Seti");
-            product.setDescription("Doğal inciler ve özel tasarım altın kaplama deniz kabuğu figürü.");
-            product.setCreatedBy("Admin");
-            product.setLastModifiedBy("Admin");
-
-            // KRİTİK NOKTA: Artık nesne değil, ID veriyoruz.
-            // Merchant servisinde oluşan ilk mağazanın ID'si genelde 1 olur.
-            product.setStoreId(1L);
-
-            // Kategorileri bağla
-            product.setCategories(List.of(cat1, cat2));
-
-            // 3. Varyant Ekle (Altın Rengi)
-            ProductVariant v1 = new ProductVariant();
-            v1.setPrice(new BigDecimal("450.00"));
-            v1.setStockQuantity(100);
-            v1.setSku("OKYANUS-SET-ALTIN");
-            v1.setCreatedBy("Admin");
-            v1.setProduct(product);
-
-            Map<String, Object> attr1 = new HashMap<>();
-            attr1.put("renk", "Altın");
-            attr1.put("materyal", "Pirinç Üzeri Altın Kaplama");
-            v1.setAttributes(attr1);
-
-            // 4. Varyant Ekle (Gümüş Rengi)
-            ProductVariant v2 = new ProductVariant();
-            v2.setPrice(new BigDecimal("420.00"));
-            v2.setStockQuantity(50);
-            v2.setSku("OKYANUS-SET-GUMUS");
-            v2.setCreatedBy("Admin");
-            v2.setProduct(product);
-
-            Map<String, Object> attr2 = new HashMap<>();
-            attr2.put("renk", "Gümüş");
-            attr2.put("materyal", "925 Ayar Gümüş");
-            v2.setAttributes(attr2);
-
-            product.setVariants(List.of(v1, v2));
-
-            // 5. Resimleri Ekle
-            ProductImage img1 = new ProductImage();
-            img1.setUrl("https://cdn.deniztasarim.com/img1.jpg");
-            img1.setDisplayOrder(1);
-            img1.setCreatedBy("Admin");
-            img1.setProduct(product);
-
-            ProductImage img2 = new ProductImage();
-            img2.setUrl("https://cdn.deniztasarim.com/img2.jpg");
-            img2.setDisplayOrder(2);
-            img2.setCreatedBy("Admin");
-            img2.setProduct(product);
-
-            product.setImages(List.of(img1, img2));
-
-            // Kaydet
-            productRepository.save(product);
-
-            System.out.println("✅ Örnek ürün kataloğa eklendi: " + product.getName());
+        // Eğer hiç kategori yoksa çalıştır
+        if (categoryRepository.count() == 0) {
+            System.out.println("🌱 Veritabanı boş, örnek veriler yükleniyor...");
+            seedData();
+            System.out.println("✅ Veri yükleme tamamlandı!");
         }
+    }
+
+    private void seedData() {
+        // ---------------------------------------------------------
+        // 1. KATEGORİ HİYERARŞİSİ (Takı -> Kolye -> Deniz Temalı)
+        // ---------------------------------------------------------
+
+        // A. Dede: "Takı"
+        Category rootCat = new Category();
+        rootCat.setName("Takı");
+        rootCat.setSlug("taki");
+        rootCat.setDescription("Tüm takı ürünleri");
+        rootCat.setPath("/temp"); // ID oluşmadan path oluşmaz
+        rootCat = categoryRepository.save(rootCat);
+
+        // Path Güncelleme: /1
+        rootCat.setPath("/" + rootCat.getId());
+        categoryRepository.save(rootCat);
+
+        // B. Baba: "Kolye" (Parent: Takı)
+        Category subCat = new Category();
+        subCat.setName("Kolye");
+        subCat.setSlug("kolye");
+        subCat.setParent(rootCat);
+        subCat.setPath("/temp");
+        subCat = categoryRepository.save(subCat);
+
+        // Path Güncelleme: /1/2
+        subCat.setPath(rootCat.getPath() + "/" + subCat.getId());
+        categoryRepository.save(subCat);
+
+        // C. Çocuk (Leaf): "Deniz Temalı" (Parent: Kolye)
+        Category leafCat = new Category();
+        leafCat.setName("Deniz Temalı");
+        leafCat.setSlug("deniz-temali");
+        leafCat.setParent(subCat);
+        leafCat.setPath("/temp");
+        leafCat = categoryRepository.save(leafCat);
+
+        // Path Güncelleme: /1/2/3
+        leafCat.setPath(subCat.getPath() + "/" + leafCat.getId());
+        categoryRepository.save(leafCat);
+
+        System.out.println("📂 Kategori Ağacı Oluşturuldu: " + leafCat.getPath());
+
+        // ---------------------------------------------------------
+        // 2. ÜRÜN OLUŞTURMA
+        // ---------------------------------------------------------
+
+        Product product = new Product();
+        product.setName("Okyanus İncisi Deniz Kabuğu Seti");
+        product.setDescription("Doğal inciler ve özel tasarım altın kaplama deniz kabuğu figürü.");
+        product.setStoreId(1L); // Merchant ID (Mock)
+
+        // KRİTİK: Ürün artık tek bir kategoriye (En alta) bağlı
+        product.setCategories(List.of(leafCat));
+
+        // ---------------------------------------------------------
+        // 3. VARYANTLAR (Altın & Gümüş)
+        // ---------------------------------------------------------
+
+        // Varyant 1: Altın
+        ProductVariant v1 = new ProductVariant();
+        v1.setSku("OKYANUS-SET-ALTIN");
+        v1.setPrice(new BigDecimal("450.00"));
+        v1.setStockQuantity(100);
+        v1.setProduct(product); // İlişkiyi kur
+
+        Map<String, Object> attr1 = new HashMap<>();
+        attr1.put("renk", "Altın");
+        attr1.put("materyal", "Pirinç Üzeri Altın Kaplama");
+        v1.setAttributes(attr1);
+
+        // Varyant 2: Gümüş
+        ProductVariant v2 = new ProductVariant();
+        v2.setSku("OKYANUS-SET-GUMUS");
+        v2.setPrice(new BigDecimal("420.00")); // Gümüş daha ucuz
+        v2.setStockQuantity(50);
+        v2.setProduct(product);
+
+        Map<String, Object> attr2 = new HashMap<>();
+        attr2.put("renk", "Gümüş");
+        attr2.put("materyal", "925 Ayar Gümüş");
+        v2.setAttributes(attr2);
+
+        // Product entity içinde cascade varsa listeye ekleyebiliriz
+        product.setVariants(List.of(v1, v2));
+
+        // ---------------------------------------------------------
+        // 4. RESİMLER
+        // ---------------------------------------------------------
+        ProductImage img1 = new ProductImage();
+        img1.setUrl("https://placehold.co/600x800/png?text=Deniz+Seti+1");
+        img1.setDisplayOrder(1);
+        img1.setProduct(product);
+
+        ProductImage img2 = new ProductImage();
+        img2.setUrl("https://placehold.co/600x800/png?text=Deniz+Seti+2");
+        img2.setDisplayOrder(2);
+        img2.setProduct(product);
+
+        product.setImages(List.of(img1, img2));
+
+        // ---------------------------------------------------------
+        // 5. KAYDET
+        // ---------------------------------------------------------
+        // CascadeType.ALL sayesinde varyantlar ve resimler de otomatik kaydedilir.
+        productRepository.save(product);
+
+        System.out.println("📦 Ürün Eklendi: " + product.getName());
     }
 }
