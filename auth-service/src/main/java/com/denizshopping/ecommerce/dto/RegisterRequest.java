@@ -1,8 +1,9 @@
 package com.denizshopping.ecommerce.dto;
 
 public record RegisterRequest(
+        String firstName,
+        String lastName,
         String email,
         String password,
-        String firstName,
-        String lastName
+        String role // <--- YENİ EKLENDİ (Opsiyonel olsun)
 ) {}
