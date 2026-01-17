@@ -93,27 +93,30 @@ pipeline {
             }
         }
 
-        stage('🛒 Merchant Deploy') {
+        stage('🛡️ Auth Deploy') {
             steps {
-                dir('merchant-service') {
+                dir('auth-service') {
                     sh 'chmod +x mvnw'
                     sh './mvnw clean package -DskipTests'
-                    sh 'docker build -t merchant-service .'
-                    sh 'docker stop merchant-service-container || true'
-                    sh 'docker rm merchant-service-container || true'
+                    sh 'docker build -t auth-service .'
 
-                    // DÜZELTME: Merchant Servisi 8082 olmalı (Gateway buraya bakıyor)
-                    // Eskiden Auth ile çakışan 8083'ü kullanıyordu, düzelttik.
+                    // Eski konteyneri temizle
+                    sh 'docker stop auth-service-container || true'
+                    sh 'docker rm auth-service-container || true'
+
+                    // GÜNCELLENMİŞ KOD: Dialect ve Driver'ı elle veriyoruz.
                     sh '''
-                        docker run -d --name merchant-service-container \
+                        docker run -d --name auth-service-container \
                         --network ecommerce-net \
-                        -p 8082:8082 \
-                        -e SERVER_PORT=8082 \
-                        -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/ecommerce_db \
-                        -e SPRING_DATASOURCE_USERNAME=postgres \
-                        -e SPRING_DATASOURCE_PASSWORD=password \
+                        -p 8083:8083 \
+                        -e SERVER_PORT=8083 \
+                        -e SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/ecommerce_auth \
+                        -e SPRING_DATASOURCE_USERNAME=deniz \
+                        -e SPRING_DATASOURCE_PASSWORD=12345 \
+                        -e SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver \
+                        -e SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect \
                         -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
-                        merchant-service
+                        auth-service
                     '''
                 }
             }
