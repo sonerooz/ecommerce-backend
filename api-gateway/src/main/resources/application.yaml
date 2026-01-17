@@ -1,48 +1,70 @@
 server:
-  port: 8090 # Konteyner içi port
+  port: 8090
 
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
+      # Performans için global zaman aşımı ayarları
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+
+      # CORS ayarları (Frontend domain'ini buraya eklemelisin)
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "https://deniztasarim.com" # Canlı domainin
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
       routes:
-        # --- AUTH SERVICE (Port 8083) ---
+        # --- AUTH SERVICE ---
         - id: auth-service
-          uri: http://auth-service-container:8083
+          uri: ${AUTH_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/auth/**
 
-        # --- CATALOG SERVICE (Port 8081) ---
-        - id: catalog-service-public
-          uri: http://catalog-service-container:8081
+        # --- CATALOG SERVICE ---
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/products/**, /api/categories/**
-            - Method=GET
-        - id: catalog-service-secured
-          uri: http://catalog-service-container:8081
-          predicates:
-            - Path=/api/products/**, /api/categories/**
-            - Method=POST, PUT, DELETE
+          # GET dışındaki metodlar için güvenlik filtresi
           filters:
-            - AuthenticationFilter
+            - name: AuthenticationFilter
+              active: true # Sadece POST, PUT, DELETE metodlarında tetiklenecek şekilde kodlanmalı
 
-        # --- MERCHANT SERVICE (Port 8082) ---
-        - id: merchant-service-public
-          uri: http://merchant-service-container:8082
+        # --- MERCHANT SERVICE ---
+        - id: merchant-service
+          uri: ${MERCHANT_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/stores/**
-            - Method=GET
-        - id: merchant-service-secured
-          uri: http://merchant-service-container:8082
-          predicates:
-            - Path=/api/stores/**
-            - Method=POST, PUT, DELETE
           filters:
-            - AuthenticationFilter
+            - name: AuthenticationFilter
 
+        # --- STORAGE SERVICE ---
+        - id: storage-service
+          uri: ${STORAGE_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/storage/**
+          filters:
+            - name: AuthenticationFilter
+
+# Güvenlik ve İzleme
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: when_authorized # Hassas bilgileri gizler
