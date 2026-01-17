@@ -1,30 +1,24 @@
 server:
-  port: 8080
+  port: 8090 # Konteyner içi port
 
 spring:
   application:
     name: api-gateway
-
   cloud:
     gateway:
       routes:
-        # ---------------------------------------------------
-        # 1. AUTH SERVICE
-        # ---------------------------------------------------
+        # --- AUTH SERVICE (Port 8083) ---
         - id: auth-service
           uri: http://auth-service-container:8083
           predicates:
             - Path=/api/auth/**
 
-        # ---------------------------------------------------
-        # 2. CATALOG SERVICE
-        # ---------------------------------------------------
+        # --- CATALOG SERVICE (Port 8081) ---
         - id: catalog-service-public
           uri: http://catalog-service-container:8081
           predicates:
             - Path=/api/products/**, /api/categories/**
             - Method=GET
-
         - id: catalog-service-secured
           uri: http://catalog-service-container:8081
           predicates:
@@ -33,15 +27,12 @@ spring:
           filters:
             - AuthenticationFilter
 
-        # ---------------------------------------------------
-        # 3. MERCHANT SERVICE
-        # ---------------------------------------------------
+        # --- MERCHANT SERVICE (Port 8082) ---
         - id: merchant-service-public
           uri: http://merchant-service-container:8082
           predicates:
             - Path=/api/stores/**
             - Method=GET
-
         - id: merchant-service-secured
           uri: http://merchant-service-container:8082
           predicates:
@@ -54,5 +45,4 @@ management:
   endpoints:
     web:
       exposure:
-        # HATA BURADAYDI: exclude değil include olmalı!
         include: health,info,prometheus,metrics
