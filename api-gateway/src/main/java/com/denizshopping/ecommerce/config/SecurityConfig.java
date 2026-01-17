@@ -19,27 +19,17 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
-                // 1. CSRF'i kapat (API'lerde genelde kapalı olur)
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-
-                // 2. CORS Ayarlarını Yükle (Next.js'in hata almaması için)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 3. İzinler (Kritik Nokta Burası)
                 .authorizeExchange(exchanges -> exchanges
-                        // Kategorileri Herkese Aç (Login Gerekmesin)
                         .pathMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        // Ürünleri Herkese Aç
                         .pathMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        // Auth (Login/Register) endpointlerini Herkese Aç
                         .pathMatchers("/api/auth/**").permitAll()
-
-                        // Geri kalan her yer için Login şart olsun
-                        .anyExchange().authenticated()
+                        .anyExchange().authenticated() // Burası "Token Zorunlu" diyor
                 )
-                // Basic Auth ve Form Login'i şimdilik kapatıyoruz
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-                .formLogin(ServerHttpSecurity.FormLoginSpec::disable);
+                // 👇 EKSİK OLAN PARÇA BURASI 👇
+                // Bu satır sayesinde Gateway, Header'daki "Bearer eyJ..." token'ını tanır.
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
 
         return http.build();
     }
