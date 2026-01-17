@@ -35,8 +35,22 @@ public class AuthService {
         user.setEmail(request.email());
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
-        user.setRole(Role.ROLE_CUSTOMER);
         user.setPassword(passwordEncoder.encode(request.password()));
+
+        // --- ROL MANTIĞI GÜNCELLENDİ ---
+        if (request.role() != null && !request.role().isEmpty()) {
+            try {
+                // Gelen string'i Enum'a çevir (ROLE_ADMIN, ROLE_SELLER vs.)
+                user.setRole(Role.valueOf(request.role()));
+            } catch (IllegalArgumentException e) {
+                // Hatalı rol gelirse varsayılan Müşteri yap
+                user.setRole(Role.ROLE_CUSTOMER);
+            }
+        } else {
+            // Rol gönderilmezse varsayılan Müşteri
+            user.setRole(Role.ROLE_CUSTOMER);
+        }
+        // --------------------------------
 
         return userMapper.toDto(userRepository.save(user));
     }
