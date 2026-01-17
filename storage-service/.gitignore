@@ -1,8 +1,10 @@
 HELP.md
 target/
-# .jar dosyasını engellemeyin, Maven Wrapper buna ihtiyaç duyar!
-!.mvn/wrapper/maven-wrapper.jar
+# .mvn klasöründeki hiçbir şeyi engelleme (Wrapper için şart)
+!**/.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.properties
 
+# Diğer standartlar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
