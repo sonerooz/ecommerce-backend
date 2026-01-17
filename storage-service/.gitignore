@@ -1,6 +1,8 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+# .jar dosyasını engellemeyin, Maven Wrapper buna ihtiyaç duyar!
+!.mvn/wrapper/maven-wrapper.jar
+
 !**/src/main/**/target/
 !**/src/test/**/target/
 
