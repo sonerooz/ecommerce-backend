@@ -1,0 +1,19 @@
+services:
+  storage-service:
+    build: .  # Dockerfile'ın aynı klasörde olduğunu varsayıyoruz
+    container_name: storage-service-container
+    ports:
+      - "8084:8084" # Dışarıdan 8084 ile erişeceğiz
+    environment:
+      - FILE_UPLOAD_DIR=/app/uploads # Linux (Konteyner) içi yol
+    volumes:
+      # ÖNEMLİ KISIM:
+      # Bilgisayarındaki 'uploads_data' klasörünü, konteynerdaki '/app/uploads'a bağlıyoruz.
+      # Böylece konteyneri silip baştan başlatsan bile resimler kaybolmaz.
+      - ./uploads_data:/app/uploads
+    networks:
+      - deniz-network
+
+networks:
+  deniz-network:
+    external: true # Diğer MS'lerin olduğu ağa bağlan
