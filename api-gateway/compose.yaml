@@ -1,10 +1,18 @@
+version: '3.8'
 services:
-  postgres:
+  auth-db:
     image: 'postgres:latest'
-    container_name: 'auth-db'
+    container_name: 'auth-db' # Jenkins bu isme (host) bağlanacak
     environment:
       - 'POSTGRES_DB=ecommerce_auth'
       - 'POSTGRES_PASSWORD=12345'
       - 'POSTGRES_USER=deniz'
     ports:
-      - '5435:5432'
+      - '5435:5432' # Dış dünyadan DB yönetimi için 5435
+    networks:
+      - ecommerce-net # Jenkins ile aynı ağ
+    restart: always
+
+networks:
+  ecommerce-net:
+    external: true # Bu ağ Jenkins tarafından veya elle önceden oluşturulmuş olmalı
